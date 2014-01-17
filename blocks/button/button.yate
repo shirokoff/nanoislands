@@ -22,7 +22,7 @@ match .button nb {
         apply . nb-main-attrs
 
         if .disabled {
-            @class += ' nb-button_disabled'
+            @class += ' is-disabled'
             @disabled = 'disabled'
         }
 
@@ -39,14 +39,10 @@ match .button nb {
         }
 
         <span class="nb-button__text">
-            if (.content && .icon) {
-                apply .icon nb
-                html(.content)
-            } else if (!.content && .icon){
-                apply .icon nb
-            } else {
-                html(.content)
-            }
+           apply .icon nb
+               if .content {
+                   html(.content)
+               }
         </span>
     </button>
 }
@@ -73,14 +69,10 @@ match .buttonLink nb {
         }
 
         <span class="nb-button__text">
-            if (.content && .icon) {
-                apply .icon nb
-                html(.content)
-            } else if (!.content && .icon ){
-                apply .icon nb
-            } else {
-                html(.content)
-            }
+           apply .icon nb
+               if .content {
+                   html(.content)
+               }
         </span>
     </a>
 }
@@ -128,8 +120,10 @@ match .buttonAttach nb {
             </span>
         </span>
         <span class="nb-button__text">
-                apply .icon nb
+            apply .icon nb
+            if (.content) {
                 html(.content)
+            }
         </span>
     </label>
 }

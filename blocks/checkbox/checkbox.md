@@ -15,7 +15,7 @@
 * `'type'` {string} `'checkbox'` / `'radio'`
 * `'disabled'` {boolean} — disabled button
 * `'checked'` {boolean} — checked button
-* `'text'` {string} — text of the label
+* `'content'` {string} — text (or custom html) of the label, can be string or `xml` _xss warning!_
 * `'attrs'` {object} `{'attr2': 'value2'}` — custom DOM attributes for checkbox input
 
 
@@ -26,7 +26,7 @@ Action buttom, size L with custom classes
 ```
     nb-checkbox({
         'type': 'radio'
-        'text': 'Паук'
+        'content': 'Паук'
         'attrs': {
             'name': 'biotype'
         }

@@ -7,52 +7,133 @@
 
 nb.define('slider', {
     events: {
-        'init': 'onInit',
-        'changeValue': 'onChangeValue',
-        'disable': 'onDisable',
-        'enable': 'onEnable'
+        'init': 'oninit'
     },
 
-    onInit: function() {
+    /**
+     * Init the slider
+     * @fires 'nb-slider_inited'
+     */
+    oninit: function() {
         var that = this;
-        that.data = that.data();
-        that.$fallback = $(that.node).find('.nb-slider__fallback');
-        that.$control = $(that.node).children('.nb-slider__body');
 
-        that.$fallback.attr('readonly', 'readonly');
-        that.$control.show();
+        this.data = this.data();
+        this.$node = $(this.node);
+        this.$control = this.$node.find('.nb-slider__fallback');
+        this.$body = this.$node.children('.nb-slider__body');
 
-        that.$node = $(that.node);
+        this.$body.show();
 
-        that.$control.slider({
+        this.$body.slider({
             range: 'min',
-            value: that.data.value,
-            change: function() {
-                that.data.value = that.$control.slider("option", "value");
-                that.onChangeValue();
-            }
+            disabled: this.$node.hasClass('is-disabled'),
+            value: parseFloat(this.data.value),
+            change: function(e, ui) {
+                this.$control.val(ui.value);
+            }.bind(this)
         });
-        that.onChangeValue();
+
+        this.$body.on('slidestop', function(event, ui) {
+            that.trigger('nb-slider_slidestop', ui.value);
+        });
+
+        this.$body.on('slidestart', function(event, ui) {
+            that.trigger('nb-slider_slidestart', ui.value);
+        });
+
+        this.$body.on('slide', function(event, ui) {
+            that.trigger('nb-slider_slide', ui.value);
+        });
+
+
+        this.trigger('nb-slider_inited');
+        return this;
     },
 
-    onChangeValue: function(value) {
-        if (value) {
-            this.data.value = this.$control.slider("option", "value", value);
+    /**
+     * Set specified value to slider
+     * @param {Number} value
+     * @fires 'nb-slider_changed'
+     */
+    setValue: function(value) {
+        if (this.$body.slider('option', 'disabled')) {
+            return this;
         }
-        this.$fallback.attr('value', this.data.value);
-
-        // Adjust the width of an input to its content
-        this.$fallback.width(0);
-        this.$fallback.width(this.$fallback[0].scrollWidth);
+        this.$body.slider('value', value);
+        this.trigger('nb-slider_value-set');
+        return this;
     },
 
-    onDisable: function() {
-        this.$node.addClass('nb-slider_disabled');
-        this.$control.slider('disable');
+    /**
+     * Return slider's value
+     * @return {Number} value
+     */
+    getValue: function() {
+        return this.$body.slider('option', 'value');
     },
 
-    onEnable: function() {
-        this.$node.removeClass('nb-slider_disabled');
-        this.$control.slider('enable');
+    /**
+     * Set name of the fallback input
+     * @param {String|Number} value
+     * @fires 'nb-slider_name-set'
+     * @return {Object} nb.block
+     */
+    setName: function(value) {
+        this.$control.prop('name', value);
+        this.trigger('nb-slider_name-set');
+        return this;
+    },
+
+    /**
+     * Get name of the fallback input
+     * @return {String|Boolean} name
+     */
+    getName: function() {
+        return this.$control.prop('name');
+    },
+
+    /**
+     * Set disabled state
+     * @fires 'nb-slider_disabled'
+     * @return {Object} nb.block
+     */
+    disable: function() {
+        this.$node.addClass('is-disabled');
+        this.$body.slider('disable');
+        this.trigger('nb-slider_disabled');
+        return this;
+    },
+
+    /**
+     * Reset disabled state
+     * @fires 'nb-slider_enabled'
+     * @return {Object} nb.block
+     */
+    enable: function() {
+        this.$node.removeClass('is-disabled');
+        this.$body.slider('enable');
+        this.trigger('nb-slider_enabled');
+        return this;
+    },
+
+    /**
+     * Return state of the slider
+     * @return {Boolean}
+     */
+    isEnabled: function() {
+        return !this.$body.slider('option', 'disabled');
+    },
+
+    /**
+     * Destroy the slider
+     * @fires 'nb-slider_destroyed'
+     */
+    destroy: function() {
+        if (this.$body && this.$body.data('uiSlider')) {
+            this.$body.slider('destroy');
+            this.$body.off('slidestart slidestop slide');
+        }
+        this.trigger('nb-slider_destroyed');
+        nb.destroy(this.node.getAttribute('id'));
     }
 });

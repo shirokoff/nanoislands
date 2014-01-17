@@ -1,3 +1,60 @@
+##### 0.1.31
+
+###### Fixes
+* fix #136 — We need to add method of the nb-select for updating position of the select's dropdown.
+* fix #142 — Select does not aligns with text baseline
+* fix #141 —  Fixed the size of the dropdowns for small selects and pseudo-selects
+* fix #139 — jQuery UI slider's events in nb-slider
+
+###### API changes
+* [Select]
+  * added open()
+  * added close()
+  * added render()
+* [Slider]
+  *  jQuery UI slider's events
+
+
+##### 0.1.30
+###### Fixes
+* fix #132
+* fix #128
+* fix #127
+* fix #130
+* fix #131
+* Select's dropdown z-index bug fixed
+
+###### API changes
+* [Select]
+  * setName()
+  * `nb-select_source-changed` event renamed to `nb-select_source-set`
+* [Progress] JS API
+* [Slider] `nb-slider_changed` event renamed to `nb-slider_value-set`
+* [Input]
+  * type multiline
+  * ghost mode
+
+##### 0.1.29
+###### Fixes
+* Change container of the select's dropdown.
+* set nb.button disabled on init
+* nb.checkbox must fires block events when change state
+* Parameters which used with html() in internal realisation now have "content" postfix
+* Fixed nb-slider's text is broken in FF
+
+###### API changes
+* [All] All "-getted" events renamed to "-get". Check documentation.
+* [Toggler] JS API refactoring. Check documentation
+* [Input] destroy() setName()
+* [Select] Added:
+    * getName()
+    * addToSource()
+    * removeFromSource()
+* [Popup] .title -> .titleContent
+* [Checkbox] .text -> .content
+* [Suggest] in source item .label -> labelContent
+* [Slider] Yate, JS API + docs
+
 ##### 0.1.28
 
 * fix for #83 — name attr

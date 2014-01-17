@@ -1,7 +1,9 @@
 nb.define('toggler', {
     events: {
         'init': 'oninit',
-        'click': 'toggle'
+        'click': 'toggle',
+        'focusin': 'focus',
+        'focusout': 'blur'
     },
 
     /**
@@ -29,10 +31,10 @@ nb.define('toggler', {
 
     /**
      * Returns value of the toggler
-     * @return {String} value
+     * @return {Boolean} value
      */
     getValue: function() {
-        return this.$control.attr('value');
+        return this.$control.prop('value');
     },
 
     /**
@@ -77,7 +79,7 @@ nb.define('toggler', {
      */
     disable: function() {
         this.$control.prop('disabled', true);
-        this.$node.addClass('nb-toggler_disabled');
+        this.$node.addClass('is-disabled');
         this.trigger('nb-toggler_disabled');
         return this;
     },
@@ -88,7 +90,7 @@ nb.define('toggler', {
      */
     enable: function() {
         this.$control.prop('disabled', false);
-        this.$node.removeClass('nb-toggler_disabled');
+        this.$node.removeClass('is-disabled');
         this.trigger('nb-toggler_enabled');
         return this;
     },

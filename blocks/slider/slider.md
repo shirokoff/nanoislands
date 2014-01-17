@@ -6,6 +6,7 @@
 
 * `'value'` — `0`
 * `'type'` — `'range'`
+* `'size'` — `'s'`
 * `'orientation'` — `'horiz'`
 
 ### Options
@@ -63,6 +64,49 @@ Initialize all nb blocks with class '_init' within DOM node
     nb.init(node);
 ```
 
-### Methods
+### Slider events
 
-None declared.
+* `nb-slider_slide` — Triggered on every mouse move during slide.
+    * @param {Number} value  — The current value of the slider.
+* `nb-slider_slidestart` — Triggered when the user starts sliding.
+    * @param {Number} value  — The current value of the slider.
+* `nb-slider_slidestop` — Triggered when the user starts sliding.
+    * @param {Number} value  — The current value of the slider.
+
+### Slider methods
+
+```
+    var slider = nb.block(node);
+
+    /**
+     * Set specified value to slider
+     * @param {Number} value
+     * @fires 'nb-slider_value-set'
+     */
+    slider.setValue(45);
+
+    /**
+     * Return slider's value
+     * @return {Number} value
+     */
+    slider.getValue(); // -> 45
+
+    /**
+     * Set disabled state
+     * @fires 'nb-slider_disabled'
+     */
+    slider.disable();
+
+    /**
+     * Reset disabled state
+     * @fires 'nb-slider_enabled'
+     */
+     slider.enable();
+
+     /**
+     * Destroy the slider
+     * @fires 'nb-slider_destroyed'
+     */
+    slider.destroy();
+
+```

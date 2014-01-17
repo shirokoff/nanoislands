@@ -10,7 +10,8 @@
 
 nb.define('select', {
     events: {
-        'init': 'onInit'
+        'init': 'onInit',
+        'click': '_onclick'
         //'open' { event, ui}
         //'close' { event, ui}
     },
@@ -24,12 +25,8 @@ nb.define('select', {
         nb.init(this);
         this.$node = $(this.node);
         this.$control = this.$node.find('select');
+        this.$dropdown = this.$node.children('.nb-select__dropdown').appendTo('body');
         this.data = this.data();
-
-        // find elements and values
-        this.button = this.children()[0];
-
-        this.$fallback = this.$node.find('.nb-select__fallback');
 
         this._updateFromSelect();
 
@@ -66,9 +63,9 @@ nb.define('select', {
             minLength: 0,
             autoFocus: false,
             position: position,
-            appendTo: that.node,
+            appendTo: that.$dropdown,
             source: function(request, response) {
-                response(that.$fallback.children('option').map(function() {
+                response(that.$control.children('option').map(function() {
                     return {
                         label: $(this).text(),
                         value: $(this).val(),
@@ -88,7 +85,7 @@ nb.define('select', {
                 that.$jUI._on(that.$jUI.document, {
                     // on 'outer' mousedown close control
                     mousedown: function(e) {
-                        if (e.which == 1 && !$.contains(that.$jUI.element.get(0), e.target)) {
+                        if (e.which == 1 && !$.contains(that.$jUI.element.get(0), e.target) && !$.contains(that.$dropdown[0], e.target)) {
                             this.close();
                         }
                     }
@@ -129,7 +126,7 @@ nb.define('select', {
         // if value not provided, return current value of fallback select
         that.$jUI.valueMethod = function(value) {
             if (typeof value === 'string') {
-                var text = that.$fallback.children('[value="' + value + '"]').text();
+                var text = that.$control.children('[value="' + value + '"]').text();
                 that.setState({
                     value: value,
                     text: text
@@ -137,20 +134,6 @@ nb.define('select', {
             }
             return that.$selected.val();
         };
-
-        // add click event for button
-        $(this.button.node).on('click', function(evt) {
-            // иначе сабмитит форму при клике
-            evt.preventDefault();
-            // close if already visible
-            if (that.$node.autocomplete('widget').css('display') == 'block') {
-                that.$node.autocomplete('close');
-                return;
-            }
-            // pass empty string as value to search for, displaying all results
-            that.$node.autocomplete('search', '');
-            that.$node.focus();
-        });
     },
 
     /**
@@ -159,13 +142,63 @@ nb.define('select', {
      */
     _updateFromSelect: function() {
         // get selected <option/>
-        this.$selected = this.$fallback.children(':selected');
+        this.$selected = this.$control.children(':selected');
 
         this.value = this.$selected.val();
         // &nbsp; - to prevent button from collapse if no text on <option/>
         this.text = this.$selected.text() || '&nbsp;';
 
-        this.button.setText(this.text);
+        this._setText(this.text);
+    },
+
+    _onclick: function(evt) {
+        // иначе сабмитит форму при клике
+        evt.preventDefault();
+        // close if already visible
+        if (this.$node.autocomplete('widget').css('display') == 'block') {
+            this.close();
+            return;
+        }
+        this.open();
+        this.$node.focus();
+    },
+
+    _setText: function(text) {
+        this.$node.find('.nb-button__text').html(text);
+    },
+
+    /**
+     * Render dropdown of the select
+     * @fires 'nb-select_rendered'
+     * @returns {Object} nb.block
+     */
+    render: function() {
+        // pass empty string as value to search for, displaying all results
+        this.$node.autocomplete('search', '');
+        this.trigger('nb-select_rendered');
+        return this;
+    },
+
+    /**
+     * Open dropdown of the select
+     * @fires 'nb-select_opened'
+     * @returns {Object} nb.block
+     */
+    open: function() {
+        this.render();
+        this.trigger('nb-select_opened');
+        return this;
+    },
+
+    /**
+     * Close dropdown of the select
+     * @fires 'nb-select_closed'
+     * @returns {Object} nb.block
+     */
+    close: function() {
+        this.$node.autocomplete('close');
+        this.trigger('nb-select_closed');
+        return this;
     },
 
     /**
@@ -175,18 +208,35 @@ nb.define('select', {
          *     value: '..'
          * }
      * @fires 'nb-select_changed'
+     * @returns {Object} nb.block
      */
     setState: function(params) {
-        this.value = params.value;
-        this.text = params.text;
-        this.$selected.removeAttr('selected');
+        params = params || {};
+        var selected;
+        if (params.value) {
+            selected = this.$control.children('option[value="' + params.value + '"]');
+        } else {
+            selected = this.$control.children('option:contains(' + params.text + ')');
+        }
 
-        this.$selected = this.$fallback.children('[value="' + this.value + '"]').attr('selected', 'selected');
-        this.button.setText(this.text);
+        if (selected.length !== 0) {
+            this.$selected.prop('selected', false);
 
-        this.trigger('nb-select_changed');
+            this.$selected = selected;
 
-        this.$fallback.val(params.value);
+            this.$selected.prop('selected', true);
+
+            this.value = this.$selected.val();
+
+            this.text = this.$selected.html();
+
+            this._setText(this.text);
+
+            this.trigger('nb-select_changed');
+
+            this.$control.val(params.value);
+
+        }
         return this;
     },
 
@@ -215,13 +265,25 @@ nb.define('select', {
     },
 
     /**
+     * Changes a value of control, text on the button and select value it the fallback
+     * @param {string} name
+     * @fires 'nb-select_name-set'
+     * @returns {Object} nb.block
+     */
+    setName: function(name) {
+        this.$control.prop('name', name);
+        this.trigger('nb-select_name-set');
+        return this;
+    },
+
+    /**
      * Disables the select
      * @fires 'nb-select_disabled'
      * @returns {Object} nb.block
      */
     disable: function() {
         if (this.isEnabled()) {
-            this.button.disable();
+            this.$node.addClass('is-disabled');
             this.trigger('nb-select_disabled');
         }
         return this;
@@ -234,7 +296,7 @@ nb.define('select', {
      */
     enable: function() {
         if (!this.isEnabled()) {
-            this.button.enable();
+            this.$node.removeClass('is-disabled');
             this.trigger('nb-select_enabled');
         }
         return this;
@@ -245,7 +307,7 @@ nb.define('select', {
      * @returns {Boolean}
      */
     isEnabled: function() {
-        return this.button.isEnabled();
+        return !this.$node.hasClass('is-disabled');
     },
 
     /*
@@ -255,6 +317,15 @@ nb.define('select', {
      * @returns {Object} nb.block
      */
     setSource: function(source) {
+
+        if (!source) {
+            return this;
+        }
+
+        if (!(source instanceof Array)) {
+            source = [source];
+        }
+
         var html = [];
         for (var i = 0, j = source.length; i < j; i++) {
             var item = source[i];
@@ -268,10 +339,10 @@ nb.define('select', {
         }
 
         // set new source for select
-        this.$fallback.empty().append(html);
+        this.$control.empty().append(html);
 
         this._updateFromSelect();
-        this.trigger('nb-select_source-changed');
+        this.trigger('nb-select_source-set');
         return this;
     },
 
@@ -280,7 +351,7 @@ nb.define('select', {
      * @returns {Array} source
      */
     getSource: function() {
-        return $.map(this.$fallback.children('option'), function(node) {
+        return $.map(this.$control.children('option'), function(node) {
             return {
                 text: $(node).text(),
                 value: $(node).val()
@@ -315,6 +386,7 @@ nb.define('select', {
         }, this);
 
         this.setSource(source);
+        this.trigger('nb-select_source-changed');
         return this;
     },
 
@@ -345,6 +417,7 @@ nb.define('select', {
         }
 
         this.setSource(source);
+        this.trigger('nb-select_source-changed');
         return this;
     },
 
@@ -355,7 +428,7 @@ nb.define('select', {
      */
     focus: function() {
         if (this.isEnabled()) {
-            this.button.focus();
+            this.$node.focus();
         }
         this.trigger('nb-select_focused');
         return this;
@@ -368,7 +441,7 @@ nb.define('select', {
      */
     blur: function() {
         if (this.isEnabled()) {
-            this.button.blur();
+            this.$node.blur();
         }
         this.trigger('nb-select_blured');
         return this;
@@ -380,9 +453,8 @@ nb.define('select', {
      */
     destroy: function() {
         if (this.$node && this.$node.data('uiAutocomplete')) {
-            this.button.destroy();
-            $(this.button.node).off('click');
             this.$node.autocomplete('destroy');
+            this.$dropdown.remove();
         }
 
         this.trigger('nb-select_destroyed');
